@@ -1,0 +1,6 @@
+com.example.usagetracker.test.app-jetified-annotation-experimental-1.3.0-0 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\ba0fe939d8312d1d90fc4cb3ae83c9be\transformed\jetified-annotation-experimental-1.3.0\res
+com.example.usagetracker.test.app-jetified-core-1.5.0-1 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\f4958a1e774c3440583e0eab7947f158\transformed\jetified-core-1.5.0\res
+com.example.usagetracker.test.app-androidTest-2 D:\Work\Development\NO\app\build\generated\res\resValues\androidTest\debug
+com.example.usagetracker.test.app-mergeDebugAndroidTestResources-3 D:\Work\Development\NO\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.example.usagetracker.test.app-mergeDebugAndroidTestResources-4 D:\Work\Development\NO\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.example.usagetracker.test.app-merged_res-5 D:\Work\Development\NO\app\build\intermediates\merged_res\debugAndroidTest

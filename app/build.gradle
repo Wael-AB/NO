@@ -16,6 +16,17 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // Add Room schema export location
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += [
+                    "room.schemaLocation": "$projectDir/schemas".toString(),
+                    "room.incremental": "true",
+                    "room.expandProjection": "true"
+                ]
+            }
+        }
     }
 
     buildTypes {
@@ -31,12 +42,15 @@ android {
     }
     
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
+        freeCompilerArgs += [
+            "-Xjvm-default=all",
+        ]
     }
 }
 
@@ -64,6 +78,7 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.7.0"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.7.0"
+    implementation "androidx.lifecycle:lifecycle-process:2.7.0"
     
     // Coroutines
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
@@ -77,6 +92,8 @@ dependencies {
 }
 
 kapt {
+    correctErrorTypes true
+    useBuildCache true
     arguments {
         arg("kapt.kotlin.generated", "$buildDir/tmp/kapt3/stubs/${android.compileSdkVersion}")
     }
