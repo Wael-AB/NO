@@ -49,8 +49,7 @@ class ControlListActivity : AppCompatActivity() {
             val packageManager = packageManager
             val installedApps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
                 .filter { app ->
-                    packageManager.getLaunchIntentForPackage(app.packageName) != null &&
-                    (app.flags and ApplicationInfo.FLAG_SYSTEM) == 0
+                    packageManager.getLaunchIntentForPackage(app.packageName) != null
                 }
                 .map { app ->
                     AppItem(

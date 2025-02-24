@@ -11,6 +11,7 @@ import androidx.core.app.NotificationCompat
 import com.example.usagetracker.data.AppDatabase
 import com.example.usagetracker.data.AppUsageEntity
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -61,8 +62,12 @@ class UsageTrackerService : Service() {
     private fun startTracking() {
         serviceScope.launch {
             while (true) {
-                trackUsageStats()
-                delay(TimeUnit.MINUTES.toMillis(5)) // Check every 5 minutes
+                try {
+                    trackUsageStats()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+                delay(TimeUnit.MINUTES.toMillis(1)) // Check every minute instead of 5
             }
         }
     }
@@ -72,6 +77,11 @@ class UsageTrackerService : Service() {
         val events = usageStatsManager.queryEvents(lastCheckedTime, currentTime)
         val usageEvent = UsageEvents.Event()
         val usageMap = mutableMapOf<String, Long>()
+        var lastEventTime = lastCheckedTime
+        var appStartTime = mutableMapOf<String, Long>()
+
+        val controlledApps = database.appUsageDao().getControlledApps().first()
+        val controlledPackages = controlledApps.map { it.packageName }.toSet()
 
         while (events.hasNextEvent()) {
             events.getNextEvent(usageEvent)
@@ -80,11 +90,29 @@ class UsageTrackerService : Service() {
             ) {
                 val packageName = usageEvent.packageName
                 val timeStamp = usageEvent.timeStamp
+                lastEventTime = timeStamp
                 
-                usageMap[packageName] = (usageMap[packageName] ?: 0) +
-                    (if (usageEvent.eventType == UsageEvents.Event.MOVE_TO_BACKGROUND)
-                        timeStamp - (lastCheckedTime.coerceAtLeast(usageEvent.timeStamp))
-                    else 0)
+                if (usageEvent.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+                    appStartTime[packageName] = timeStamp
+                    if (packageName in controlledPackages && packageName != applicationContext.packageName) {
+                        showUsageWarning(packageName)
+                    }
+                } else if (usageEvent.eventType == UsageEvents.Event.MOVE_TO_BACKGROUND) {
+                    val startTime = appStartTime[packageName] ?: lastCheckedTime
+                    val usageTime = timeStamp - startTime
+                    if (usageTime > 0) {
+                        usageMap[packageName] = (usageMap[packageName] ?: 0) + usageTime
+                    }
+                    appStartTime.remove(packageName)
+                }
+            }
+        }
+
+        // Add usage time for apps that are still in foreground
+        appStartTime.forEach { (packageName, startTime) ->
+            val usageTime = currentTime - startTime
+            if (usageTime > 0) {
+                usageMap[packageName] = (usageMap[packageName] ?: 0) + usageTime
             }
         }
 
@@ -100,18 +128,36 @@ class UsageTrackerService : Service() {
                     packageName
                 }
 
+                // Normalize date to midnight
+                val normalizedDate = Calendar.getInstance().apply {
+                    timeInMillis = currentTime
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+
                 database.appUsageDao().insertUsage(
                     AppUsageEntity(
                         packageName = packageName,
                         appName = appName,
                         usageTimeInMillis = timeInForeground,
-                        date = Calendar.getInstance().timeInMillis
+                        date = normalizedDate,
+                        isControlled = packageName in controlledPackages
                     )
                 )
             }
         }
 
-        lastCheckedTime = currentTime
+        lastCheckedTime = lastEventTime
+    }
+
+    private fun showUsageWarning(packageName: String) {
+        val intent = Intent(applicationContext, PopupService::class.java).apply {
+            putExtra("package_name", packageName)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startService(intent)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -122,5 +168,10 @@ class UsageTrackerService : Service() {
         if (wakeLock.isHeld) {
             wakeLock.release()
         }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // If service gets killed, restart it
+        return START_STICKY
     }
 } 

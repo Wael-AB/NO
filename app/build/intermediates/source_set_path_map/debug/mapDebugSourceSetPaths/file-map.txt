@@ -1,0 +1,45 @@
+com.example.usagetracker.app-recyclerview-1.1.0-0 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\00b46f04bed6a877d27605e197c1e2c5\transformed\recyclerview-1.1.0\res
+com.example.usagetracker.app-jetified-appcompat-resources-1.6.1-1 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\03eee0ec7a76cecb8f887617fecdc350\transformed\jetified-appcompat-resources-1.6.1\res
+com.example.usagetracker.app-core-runtime-2.2.0-2 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\07e5fd503cd4173dba1d3738e266b54e\transformed\core-runtime-2.2.0\res
+com.example.usagetracker.app-work-runtime-ktx-2.9.0-3 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\0a41cc4ae6e0b6d95488779ccdb4d0f9\transformed\work-runtime-ktx-2.9.0\res
+com.example.usagetracker.app-jetified-lifecycle-viewmodel-ktx-2.7.0-4 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\1f5770befda22cd1a48acec6b22a7a84\transformed\jetified-lifecycle-viewmodel-ktx-2.7.0\res
+com.example.usagetracker.app-jetified-lifecycle-viewmodel-savedstate-2.7.0-5 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\233acb719d88da8e025bc26a74795e38\transformed\jetified-lifecycle-viewmodel-savedstate-2.7.0\res
+com.example.usagetracker.app-jetified-lifecycle-process-2.7.0-6 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\24937f1e2475cbd2f65c6e64238b4870\transformed\jetified-lifecycle-process-2.7.0\res
+com.example.usagetracker.app-jetified-activity-1.8.0-7 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\2857e387b363076b5fa831ddf30fd23a\transformed\jetified-activity-1.8.0\res
+com.example.usagetracker.app-lifecycle-viewmodel-2.7.0-8 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\3047d9e8f60b3af11308ab15424b29f0\transformed\lifecycle-viewmodel-2.7.0\res
+com.example.usagetracker.app-jetified-profileinstaller-1.3.0-9 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\4a5f50dcc45c9cf003b1bb823e0ecc0e\transformed\jetified-profileinstaller-1.3.0\res
+com.example.usagetracker.app-jetified-lifecycle-livedata-core-ktx-2.7.0-10 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\4e74b008a6844a7a3035a3f8666956e5\transformed\jetified-lifecycle-livedata-core-ktx-2.7.0\res
+com.example.usagetracker.app-jetified-viewpager2-1.0.0-11 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\507dcbfcb5cb0873144b54b92b5e19ab\transformed\jetified-viewpager2-1.0.0\res
+com.example.usagetracker.app-jetified-lifecycle-runtime-ktx-2.7.0-12 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\5c85837f524a7ceba7fef05f02414a91\transformed\jetified-lifecycle-runtime-ktx-2.7.0\res
+com.example.usagetracker.app-jetified-savedstate-1.2.1-13 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\6875142a843b95d6c1007503afd641b0\transformed\jetified-savedstate-1.2.1\res
+com.example.usagetracker.app-material-1.11.0-14 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\7259a5aa50190faf7ce9613b84190b47\transformed\material-1.11.0\res
+com.example.usagetracker.app-jetified-emoji2-1.2.0-15 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\7332681de26a4871fd664e0a97f079d1\transformed\jetified-emoji2-1.2.0\res
+com.example.usagetracker.app-sqlite-2.4.0-16 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\7e742169c61c5a335b1640eb543a1fe4\transformed\sqlite-2.4.0\res
+com.example.usagetracker.app-jetified-lifecycle-service-2.7.0-17 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\7f0b5cfc7bdedcc942e6e8991ee74185\transformed\jetified-lifecycle-service-2.7.0\res
+com.example.usagetracker.app-jetified-emoji2-views-helper-1.2.0-18 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\84b13be4204c7752fd8cad58e0e113a1\transformed\jetified-emoji2-views-helper-1.2.0\res
+com.example.usagetracker.app-lifecycle-runtime-2.7.0-19 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\90c764de0cd17f242da0ac5d28dde6e3\transformed\lifecycle-runtime-2.7.0\res
+com.example.usagetracker.app-sqlite-framework-2.4.0-20 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\90da732b1edc2ffba0ececc3ba58ff20\transformed\sqlite-framework-2.4.0\res
+com.example.usagetracker.app-jetified-core-ktx-1.12.0-21 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\916660a82bdb5cf0e628ae4dcd071524\transformed\jetified-core-ktx-1.12.0\res
+com.example.usagetracker.app-work-runtime-2.9.0-22 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\91a66919ec0eb50248b816f9f9160b87\transformed\work-runtime-2.9.0\res
+com.example.usagetracker.app-lifecycle-livedata-2.7.0-23 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\99054d68db7a462d31461ae0ea07b23c\transformed\lifecycle-livedata-2.7.0\res
+com.example.usagetracker.app-constraintlayout-2.1.4-24 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\9afbef9cd004b2a3b87eed1cd5cb3cd0\transformed\constraintlayout-2.1.4\res
+com.example.usagetracker.app-jetified-lifecycle-livedata-ktx-2.7.0-25 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\a243fe4aa9971e10be6ae63c387091b2\transformed\jetified-lifecycle-livedata-ktx-2.7.0\res
+com.example.usagetracker.app-jetified-room-ktx-2.6.1-26 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\a49c15d4ffafc77f5092ff884c0ef01e\transformed\jetified-room-ktx-2.6.1\res
+com.example.usagetracker.app-jetified-annotation-experimental-1.3.0-27 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\b2cfff06c3469733ab392aaea6824e12\transformed\jetified-annotation-experimental-1.3.0\res
+com.example.usagetracker.app-fragment-1.3.6-28 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\b3af2e4621630536ea662515e17868b9\transformed\fragment-1.3.6\res
+com.example.usagetracker.app-appcompat-1.6.1-29 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\b44e669a6130ca3a17bdec91d4f883af\transformed\appcompat-1.6.1\res
+com.example.usagetracker.app-lifecycle-livedata-core-2.7.0-30 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\c3c7bec830e2739ce843a367fbdd603b\transformed\lifecycle-livedata-core-2.7.0\res
+com.example.usagetracker.app-drawerlayout-1.1.1-31 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\c43129fd43591a90778fd6b9ef9351b2\transformed\drawerlayout-1.1.1\res
+com.example.usagetracker.app-transition-1.2.0-32 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\cd6798e2aa39baf1aaa240032ab69b0e\transformed\transition-1.2.0\res
+com.example.usagetracker.app-cardview-1.0.0-33 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\ce6df02f701a5263972a91cbb37557fc\transformed\cardview-1.0.0\res
+com.example.usagetracker.app-room-runtime-2.6.1-34 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\d1c8844be1f02a9fd16bced6523307ff\transformed\room-runtime-2.6.1\res
+com.example.usagetracker.app-jetified-startup-runtime-1.1.1-35 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\daf273749abd8524c8f147c54064df40\transformed\jetified-startup-runtime-1.1.1\res
+com.example.usagetracker.app-core-1.12.0-36 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\ea51e1b61399f09dba8efc8a3652f087\transformed\core-1.12.0\res
+com.example.usagetracker.app-coordinatorlayout-1.1.0-37 C:\Users\Wael AB\.gradle\caches\8.10.2\transforms\fd794bf4fdfd3dc8abe2f385881afca1\transformed\coordinatorlayout-1.1.0\res
+com.example.usagetracker.app-pngs-38 D:\Work\Development\NO\app\build\generated\res\pngs\debug
+com.example.usagetracker.app-resValues-39 D:\Work\Development\NO\app\build\generated\res\resValues\debug
+com.example.usagetracker.app-mergeDebugResources-40 D:\Work\Development\NO\app\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
+com.example.usagetracker.app-mergeDebugResources-41 D:\Work\Development\NO\app\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
+com.example.usagetracker.app-debug-42 D:\Work\Development\NO\app\build\intermediates\merged_res\debug\mergeDebugResources
+com.example.usagetracker.app-debug-43 D:\Work\Development\NO\app\src\debug\res
+com.example.usagetracker.app-main-44 D:\Work\Development\NO\app\src\main\res

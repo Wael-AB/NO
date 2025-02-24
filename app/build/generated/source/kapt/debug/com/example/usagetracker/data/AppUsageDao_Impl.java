@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 import androidx.room.CoroutinesRoom;
 import androidx.room.EntityInsertionAdapter;
 import androidx.room.RoomDatabase;
+import androidx.room.RoomDatabaseKt;
 import androidx.room.RoomSQLiteQuery;
 import androidx.room.SharedSQLiteStatement;
 import androidx.room.util.CursorUtil;
@@ -35,7 +36,7 @@ public final class AppUsageDao_Impl implements AppUsageDao {
 
   private final EntityInsertionAdapter<AppUsageEntity> __insertionAdapterOfAppUsageEntity;
 
-  private final SharedSQLiteStatement __preparedStmtOfUpdateAppControlStatus;
+  private final SharedSQLiteStatement __preparedStmtOfUpdateControlStatus;
 
   public AppUsageDao_Impl(@NonNull final RoomDatabase __db) {
     this.__db = __db;
@@ -66,7 +67,7 @@ public final class AppUsageDao_Impl implements AppUsageDao {
         statement.bindLong(6, _tmp);
       }
     };
-    this.__preparedStmtOfUpdateAppControlStatus = new SharedSQLiteStatement(__db) {
+    this.__preparedStmtOfUpdateControlStatus = new SharedSQLiteStatement(__db) {
       @Override
       @NonNull
       public String createQuery() {
@@ -98,11 +99,17 @@ public final class AppUsageDao_Impl implements AppUsageDao {
   @Override
   public Object updateAppControlStatus(final String packageName, final boolean isControlled,
       final Continuation<? super Unit> $completion) {
+    return RoomDatabaseKt.withTransaction(__db, (__cont) -> AppUsageDao.super.updateAppControlStatus(packageName, isControlled, __cont), $completion);
+  }
+
+  @Override
+  public Object updateControlStatus(final String packageName, final boolean isControlled,
+      final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
       public Unit call() throws Exception {
-        final SupportSQLiteStatement _stmt = __preparedStmtOfUpdateAppControlStatus.acquire();
+        final SupportSQLiteStatement _stmt = __preparedStmtOfUpdateControlStatus.acquire();
         int _argIndex = 1;
         final int _tmp = isControlled ? 1 : 0;
         _stmt.bindLong(_argIndex, _tmp);
@@ -122,7 +129,7 @@ public final class AppUsageDao_Impl implements AppUsageDao {
             __db.endTransaction();
           }
         } finally {
-          __preparedStmtOfUpdateAppControlStatus.release(_stmt);
+          __preparedStmtOfUpdateControlStatus.release(_stmt);
         }
       }
     }, $completion);
@@ -315,6 +322,67 @@ public final class AppUsageDao_Impl implements AppUsageDao {
   }
 
   @Override
+  public Object getAppByPackageName(final String packageName,
+      final Continuation<? super AppUsageEntity> $completion) {
+    final String _sql = "SELECT * FROM app_usage WHERE packageName = ? LIMIT 1";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    if (packageName == null) {
+      _statement.bindNull(_argIndex);
+    } else {
+      _statement.bindString(_argIndex, packageName);
+    }
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<AppUsageEntity>() {
+      @Override
+      @Nullable
+      public AppUsageEntity call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfPackageName = CursorUtil.getColumnIndexOrThrow(_cursor, "packageName");
+          final int _cursorIndexOfAppName = CursorUtil.getColumnIndexOrThrow(_cursor, "appName");
+          final int _cursorIndexOfUsageTimeInMillis = CursorUtil.getColumnIndexOrThrow(_cursor, "usageTimeInMillis");
+          final int _cursorIndexOfDate = CursorUtil.getColumnIndexOrThrow(_cursor, "date");
+          final int _cursorIndexOfIsControlled = CursorUtil.getColumnIndexOrThrow(_cursor, "isControlled");
+          final AppUsageEntity _result;
+          if (_cursor.moveToFirst()) {
+            final long _tmpId;
+            _tmpId = _cursor.getLong(_cursorIndexOfId);
+            final String _tmpPackageName;
+            if (_cursor.isNull(_cursorIndexOfPackageName)) {
+              _tmpPackageName = null;
+            } else {
+              _tmpPackageName = _cursor.getString(_cursorIndexOfPackageName);
+            }
+            final String _tmpAppName;
+            if (_cursor.isNull(_cursorIndexOfAppName)) {
+              _tmpAppName = null;
+            } else {
+              _tmpAppName = _cursor.getString(_cursorIndexOfAppName);
+            }
+            final long _tmpUsageTimeInMillis;
+            _tmpUsageTimeInMillis = _cursor.getLong(_cursorIndexOfUsageTimeInMillis);
+            final long _tmpDate;
+            _tmpDate = _cursor.getLong(_cursorIndexOfDate);
+            final boolean _tmpIsControlled;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsControlled);
+            _tmpIsControlled = _tmp != 0;
+            _result = new AppUsageEntity(_tmpId,_tmpPackageName,_tmpAppName,_tmpUsageTimeInMillis,_tmpDate,_tmpIsControlled);
+          } else {
+            _result = null;
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
   public Object getTotalUsageTime(final String packageName, final long startTime,
       final long endTime, final Continuation<? super Long> $completion) {
     final String _sql = "SELECT SUM(usageTimeInMillis) FROM app_usage WHERE packageName = ? AND date >= ? AND date <= ?";
@@ -355,6 +423,45 @@ public final class AppUsageDao_Impl implements AppUsageDao {
         }
       }
     }, $completion);
+  }
+
+  @Override
+  public Flow<List<DailyUsage>> getDailyUsage(final long startTime, final long endTime) {
+    final String _sql = "SELECT date, SUM(usageTimeInMillis) as totalUsage FROM app_usage WHERE date >= ? AND date <= ? GROUP BY date";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
+    int _argIndex = 1;
+    _statement.bindLong(_argIndex, startTime);
+    _argIndex = 2;
+    _statement.bindLong(_argIndex, endTime);
+    return CoroutinesRoom.createFlow(__db, false, new String[] {"app_usage"}, new Callable<List<DailyUsage>>() {
+      @Override
+      @NonNull
+      public List<DailyUsage> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfDate = 0;
+          final int _cursorIndexOfTotalUsage = 1;
+          final List<DailyUsage> _result = new ArrayList<DailyUsage>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final DailyUsage _item;
+            final long _tmpDate;
+            _tmpDate = _cursor.getLong(_cursorIndexOfDate);
+            final long _tmpTotalUsage;
+            _tmpTotalUsage = _cursor.getLong(_cursorIndexOfTotalUsage);
+            _item = new DailyUsage(_tmpDate,_tmpTotalUsage);
+            _result.add(_item);
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+        }
+      }
+
+      @Override
+      protected void finalize() {
+        _statement.release();
+      }
+    });
   }
 
   @NonNull

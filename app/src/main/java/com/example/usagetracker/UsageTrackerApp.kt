@@ -11,15 +11,14 @@ import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.example.usagetracker.data.AppDatabase
 import com.example.usagetracker.service.PopupService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import java.util.concurrent.TimeUnit
 
 class UsageTrackerApp : Application(), LifecycleObserver {
     private lateinit var usageStatsManager: UsageStatsManager
     private lateinit var database: AppDatabase
-    private var lastCheckedTime = System.currentTimeMillis()
+    private val appScope = CoroutineScope(Dispatchers.Default + Job())
 
     override fun onCreate() {
         super.onCreate()
@@ -34,28 +33,31 @@ class UsageTrackerApp : Application(), LifecycleObserver {
     }
 
     private fun checkCurrentApp() {
-        CoroutineScope(Dispatchers.Default).launch {
-            val currentTime = System.currentTimeMillis()
-            val events = usageStatsManager.queryEvents(
-                currentTime - TimeUnit.MINUTES.toMillis(1),
-                currentTime
-            )
-            val event = UsageEvents.Event()
-            var lastForegroundApp = ""
+        appScope.launch {
+            try {
+                val currentTime = System.currentTimeMillis()
+                val events = usageStatsManager.queryEvents(
+                    currentTime - TimeUnit.MINUTES.toMillis(1),
+                    currentTime
+                )
+                val event = UsageEvents.Event()
+                var lastForegroundApp = ""
 
-            while (events.hasNextEvent()) {
-                events.getNextEvent(event)
-                if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
-                    lastForegroundApp = event.packageName
+                while (events.hasNextEvent()) {
+                    events.getNextEvent(event)
+                    if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+                        lastForegroundApp = event.packageName
+                    }
                 }
-            }
 
-            if (lastForegroundApp.isNotEmpty()) {
-                database.appUsageDao().getControlledApps().collect { controlledApps ->
+                if (lastForegroundApp.isNotEmpty() && lastForegroundApp != packageName) {
+                    val controlledApps = database.appUsageDao().getControlledApps().first()
                     if (controlledApps.any { it.packageName == lastForegroundApp }) {
                         showUsageWarning(lastForegroundApp)
                     }
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
@@ -63,6 +65,7 @@ class UsageTrackerApp : Application(), LifecycleObserver {
     private fun showUsageWarning(packageName: String) {
         val intent = Intent(this, PopupService::class.java).apply {
             putExtra("package_name", packageName)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         startService(intent)
     }

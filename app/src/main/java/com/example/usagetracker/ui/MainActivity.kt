@@ -15,6 +15,7 @@ import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.ValueFormatter
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -37,6 +38,14 @@ class MainActivity : AppCompatActivity() {
         setupButtons()
         startUsageTracking()
         loadUsageData()
+
+        // Refresh data every minute
+        lifecycleScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(TimeUnit.MINUTES.toMillis(1))
+                loadUsageData()
+            }
+        }
     }
 
     private fun checkPermissions() {
@@ -85,7 +94,8 @@ class MainActivity : AppCompatActivity() {
                 valueFormatter = object : ValueFormatter() {
                     override fun getFormattedValue(value: Float): String {
                         val hours = TimeUnit.MILLISECONDS.toHours(value.toLong())
-                        return "${hours}h"
+                        val minutes = TimeUnit.MILLISECONDS.toMinutes(value.toLong()) % 60
+                        return if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
                     }
                 }
             }
@@ -107,41 +117,40 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadUsageData() {
         lifecycleScope.launch {
-            val calendar = Calendar.getInstance()
-            calendar.add(Calendar.DAY_OF_YEAR, -7)
+            val calendar = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_YEAR, -7)
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
             val startTime = calendar.timeInMillis
+            val endTime = System.currentTimeMillis()
 
-            database.appUsageDao().getUsageByTimeRange(startTime, System.currentTimeMillis())
-                .collect { usageList ->
-                    val dailyUsage = usageList.groupBy { usage ->
-                        Calendar.getInstance().apply {
-                            timeInMillis = usage.date
-                            set(Calendar.HOUR_OF_DAY, 0)
-                            set(Calendar.MINUTE, 0)
-                            set(Calendar.SECOND, 0)
-                            set(Calendar.MILLISECOND, 0)
-                        }.timeInMillis
-                    }
-
-                    val entries = dailyUsage.map { (date, usages) ->
+            database.appUsageDao().getDailyUsage(startTime, endTime)
+                .collect { dailyUsage ->
+                    val entries = dailyUsage.map { usage ->
                         BarEntry(
-                            date.toFloat(),
-                            usages.sumOf { it.usageTimeInMillis }.toFloat()
+                            usage.date.toFloat(),
+                            usage.totalUsage.toFloat()
                         )
                     }.sortedBy { it.x }
 
-                    val dataSet = BarDataSet(entries, "Daily Usage").apply {
-                        setDrawValues(true)
-                        valueFormatter = object : ValueFormatter() {
-                            override fun getFormattedValue(value: Float): String {
-                                val hours = TimeUnit.MILLISECONDS.toHours(value.toLong())
-                                return "${hours}h"
+                    if (entries.isNotEmpty()) {
+                        val dataSet = BarDataSet(entries, "Daily Usage").apply {
+                            setDrawValues(true)
+                            valueFormatter = object : ValueFormatter() {
+                                override fun getFormattedValue(value: Float): String {
+                                    val hours = TimeUnit.MILLISECONDS.toHours(value.toLong())
+                                    val minutes = TimeUnit.MILLISECONDS.toMinutes(value.toLong()) % 60
+                                    return if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
+                                }
                             }
                         }
-                    }
 
-                    binding.usageChart.data = BarData(dataSet)
-                    binding.usageChart.invalidate()
+                        binding.usageChart.data = BarData(dataSet)
+                        binding.usageChart.invalidate()
+                    }
                 }
         }
     }

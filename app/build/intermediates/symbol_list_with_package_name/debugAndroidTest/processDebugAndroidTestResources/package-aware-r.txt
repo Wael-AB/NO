@@ -1,0 +1,3 @@
+com.example.usagetracker.test
+style WhiteBackgroundDialogTheme
+style WhiteBackgroundTheme
