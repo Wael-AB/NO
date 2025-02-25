@@ -5,26 +5,27 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Process
 import android.provider.Settings
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.example.usagetracker.R
 import com.example.usagetracker.data.AppDatabase
 import com.example.usagetracker.databinding.ActivityMainBinding
 import com.example.usagetracker.service.UsageTrackerService
-import com.github.mikephil.charting.components.XAxis
-import com.github.mikephil.charting.data.BarData
-import com.github.mikephil.charting.data.BarDataSet
-import com.github.mikephil.charting.data.BarEntry
-import com.github.mikephil.charting.formatter.ValueFormatter
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
+import com.github.mikephil.charting.data.PieData
+import com.github.mikephil.charting.data.PieDataSet
+import com.github.mikephil.charting.data.PieEntry
+import com.github.mikephil.charting.utils.ColorTemplate
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var database: AppDatabase
+    private lateinit var periodSpinner: Spinner
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,20 +33,13 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         
         database = AppDatabase.getDatabase(this)
+        periodSpinner = binding.periodSpinner
 
         checkPermissions()
         setupChart()
+        setupSpinner()
         setupButtons()
         startUsageTracking()
-        loadUsageData()
-
-        // Refresh data every minute
-        lifecycleScope.launch {
-            while (true) {
-                kotlinx.coroutines.delay(TimeUnit.MINUTES.toMillis(1))
-                loadUsageData()
-            }
-        }
     }
 
     private fun checkPermissions() {
@@ -68,41 +62,32 @@ class MainActivity : AppCompatActivity() {
     private fun setupChart() {
         binding.usageChart.apply {
             description.isEnabled = false
-            setDrawGridBackground(false)
-            setDrawBarShadow(false)
-            setScaleEnabled(true)
-            setPinchZoom(false)
-            
-            xAxis.apply {
-                position = XAxis.XAxisPosition.BOTTOM
-                setDrawGridLines(false)
-                granularity = 1f
-                valueFormatter = object : ValueFormatter() {
-                    private val dateFormat = SimpleDateFormat("MM/dd", Locale.getDefault())
-                    override fun getFormattedValue(value: Float): String {
-                        val date = Calendar.getInstance().apply {
-                            timeInMillis = value.toLong()
-                        }
-                        return dateFormat.format(date.time)
-                    }
-                }
-            }
-
-            axisLeft.apply {
-                setDrawGridLines(true)
-                axisMinimum = 0f
-                valueFormatter = object : ValueFormatter() {
-                    override fun getFormattedValue(value: Float): String {
-                        val hours = TimeUnit.MILLISECONDS.toHours(value.toLong())
-                        val minutes = TimeUnit.MILLISECONDS.toMinutes(value.toLong()) % 60
-                        return if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
-                    }
-                }
-            }
-
-            axisRight.isEnabled = false
+            setDrawEntryLabels(true)
             legend.isEnabled = true
+            setUsePercentValues(true)
+            setEntryLabelTextSize(12f)
+            centerText = "App Usage"
+            setCenterTextSize(16f)
         }
+    }
+
+    private fun setupSpinner() {
+        val adapter = ArrayAdapter.createFromResource(
+            this,
+            R.array.period_options,
+            android.R.layout.simple_spinner_item
+        ).apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+        
+        periodSpinner.adapter = adapter
+        periodSpinner.setOnItemSelectedListener(object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                loadUsageData()
+            }
+
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        })
     }
 
     private fun setupButtons() {
@@ -113,45 +98,61 @@ class MainActivity : AppCompatActivity() {
 
     private fun startUsageTracking() {
         startService(Intent(this, UsageTrackerService::class.java))
+        loadUsageData()
     }
 
     private fun loadUsageData() {
         lifecycleScope.launch {
-            val calendar = Calendar.getInstance().apply {
-                add(Calendar.DAY_OF_YEAR, -7)
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
+            val currentTime = System.currentTimeMillis()
+            val startTime = when (periodSpinner.selectedItem.toString()) {
+                "Day" -> {
+                    Calendar.getInstance().apply {
+                        timeInMillis = currentTime
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }.timeInMillis
+                }
+                "Week" -> currentTime - TimeUnit.DAYS.toMillis(7)
+                "Month" -> currentTime - TimeUnit.DAYS.toMillis(30)
+                "Year" -> currentTime - TimeUnit.DAYS.toMillis(365)
+                else -> currentTime - TimeUnit.DAYS.toMillis(1)
             }
-            val startTime = calendar.timeInMillis
-            val endTime = System.currentTimeMillis()
 
-            database.appUsageDao().getDailyUsage(startTime, endTime)
-                .collect { dailyUsage ->
-                    val entries = dailyUsage.map { usage ->
-                        BarEntry(
-                            usage.date.toFloat(),
-                            usage.totalUsage.toFloat()
-                        )
-                    }.sortedBy { it.x }
+            val controlledApps = database.appUsageDao().getControlledApps().first()
+            val entries = mutableListOf<PieEntry>()
+            
+            for (app in controlledApps) {
+                val usageTime = database.appUsageDao().getTotalUsageTime(
+                    app.packageName,
+                    startTime,
+                    currentTime
+                ) ?: 0L
 
-                    if (entries.isNotEmpty()) {
-                        val dataSet = BarDataSet(entries, "Daily Usage").apply {
-                            setDrawValues(true)
-                            valueFormatter = object : ValueFormatter() {
-                                override fun getFormattedValue(value: Float): String {
-                                    val hours = TimeUnit.MILLISECONDS.toHours(value.toLong())
-                                    val minutes = TimeUnit.MILLISECONDS.toMinutes(value.toLong()) % 60
-                                    return if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
-                                }
-                            }
+                if (usageTime > 0) {
+                    val hours = TimeUnit.MILLISECONDS.toHours(usageTime).toFloat()
+                    entries.add(PieEntry(hours, app.appName))
+                }
+            }
+
+            if (entries.isNotEmpty()) {
+                val dataSet = PieDataSet(entries, "Hours Used").apply {
+                    colors = ColorTemplate.MATERIAL_COLORS.toList()
+                    valueTextSize = 14f
+                    valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
+                        override fun getFormattedValue(value: Float): String {
+                            return String.format("%.1f h", value)
                         }
-
-                        binding.usageChart.data = BarData(dataSet)
-                        binding.usageChart.invalidate()
                     }
                 }
+
+                binding.usageChart.data = PieData(dataSet)
+                binding.usageChart.invalidate()
+            } else {
+                binding.usageChart.clear()
+                binding.usageChart.centerText = "No usage data"
+            }
         }
     }
 } 

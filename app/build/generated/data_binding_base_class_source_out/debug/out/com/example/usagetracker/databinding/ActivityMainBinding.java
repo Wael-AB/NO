@@ -4,44 +4,43 @@ package com.example.usagetracker.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.example.usagetracker.R;
-import com.github.mikephil.charting.charts.BarChart;
-import com.google.android.material.button.MaterialButton;
+import com.github.mikephil.charting.charts.PieChart;
 import java.lang.NullPointerException;
 import java.lang.Override;
 import java.lang.String;
 
 public final class ActivityMainBinding implements ViewBinding {
   @NonNull
-  private final ConstraintLayout rootView;
+  private final LinearLayout rootView;
 
   @NonNull
-  public final MaterialButton controlListButton;
+  public final Button controlListButton;
 
   @NonNull
-  public final TextView titleText;
+  public final Spinner periodSpinner;
 
   @NonNull
-  public final BarChart usageChart;
+  public final PieChart usageChart;
 
-  private ActivityMainBinding(@NonNull ConstraintLayout rootView,
-      @NonNull MaterialButton controlListButton, @NonNull TextView titleText,
-      @NonNull BarChart usageChart) {
+  private ActivityMainBinding(@NonNull LinearLayout rootView, @NonNull Button controlListButton,
+      @NonNull Spinner periodSpinner, @NonNull PieChart usageChart) {
     this.rootView = rootView;
     this.controlListButton = controlListButton;
-    this.titleText = titleText;
+    this.periodSpinner = periodSpinner;
     this.usageChart = usageChart;
   }
 
   @Override
   @NonNull
-  public ConstraintLayout getRoot() {
+  public LinearLayout getRoot() {
     return rootView;
   }
 
@@ -67,24 +66,24 @@ public final class ActivityMainBinding implements ViewBinding {
     int id;
     missingId: {
       id = R.id.controlListButton;
-      MaterialButton controlListButton = ViewBindings.findChildViewById(rootView, id);
+      Button controlListButton = ViewBindings.findChildViewById(rootView, id);
       if (controlListButton == null) {
         break missingId;
       }
 
-      id = R.id.titleText;
-      TextView titleText = ViewBindings.findChildViewById(rootView, id);
-      if (titleText == null) {
+      id = R.id.periodSpinner;
+      Spinner periodSpinner = ViewBindings.findChildViewById(rootView, id);
+      if (periodSpinner == null) {
         break missingId;
       }
 
       id = R.id.usageChart;
-      BarChart usageChart = ViewBindings.findChildViewById(rootView, id);
+      PieChart usageChart = ViewBindings.findChildViewById(rootView, id);
       if (usageChart == null) {
         break missingId;
       }
 
-      return new ActivityMainBinding((ConstraintLayout) rootView, controlListButton, titleText,
+      return new ActivityMainBinding((LinearLayout) rootView, controlListButton, periodSpinner,
           usageChart);
     }
     String missingId = rootView.getResources().getResourceName(id);

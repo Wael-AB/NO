@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
+import java.util.Calendar
 
 class PopupService : Service() {
     private lateinit var windowManager: WindowManager
@@ -37,25 +38,46 @@ class PopupService : Service() {
     private fun showPopup(packageName: String) {
         CoroutineScope(Dispatchers.Main).launch {
             val currentTime = System.currentTimeMillis()
-            val todayStart = currentTime - TimeUnit.HOURS.toMillis(24)
             
-            val usageTime = database.appUsageDao().getTotalUsageTime(
+            // Get today's usage (from midnight to now)
+            val calendar = Calendar.getInstance().apply {
+                timeInMillis = currentTime
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            val todayStart = calendar.timeInMillis
+            
+            // Get last 24 hours usage
+            val last24HoursStart = currentTime - TimeUnit.HOURS.toMillis(24)
+            
+            val todayUsage = database.appUsageDao().getTotalUsageTime(
                 packageName,
                 todayStart,
                 currentTime
             ) ?: 0L
 
-            val lastDayUsageTime = database.appUsageDao().getTotalUsageTime(
+            val last24HoursUsage = database.appUsageDao().getTotalUsageTime(
                 packageName,
-                todayStart - TimeUnit.HOURS.toMillis(24),
-                todayStart
+                last24HoursStart,
+                currentTime
             ) ?: 0L
 
-            createAndShowPopupWindow(packageName, usageTime, lastDayUsageTime)
+            // Get app name
+            val appName = try {
+                packageManager.getApplicationLabel(
+                    packageManager.getApplicationInfo(packageName, 0)
+                ).toString()
+            } catch (e: Exception) {
+                packageName
+            }
+
+            createAndShowPopupWindow(appName, todayUsage, last24HoursUsage)
         }
     }
 
-    private fun createAndShowPopupWindow(packageName: String, todayUsage: Long, lastDayUsage: Long) {
+    private fun createAndShowPopupWindow(appName: String, todayUsage: Long, last24HoursUsage: Long) {
         val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         popupView = inflater.inflate(R.layout.popup_layout, null)
 
@@ -68,14 +90,17 @@ class PopupService : Service() {
         )
         params.gravity = Gravity.CENTER
 
+        // Set the app name in the header
+        popupView.findViewById<TextView>(R.id.headerText).text = "$appName Usage Warning"
+
         val todayHours = TimeUnit.MILLISECONDS.toHours(todayUsage)
         val todayMinutes = TimeUnit.MILLISECONDS.toMinutes(todayUsage) % 60
-        val lastDayHours = TimeUnit.MILLISECONDS.toHours(lastDayUsage)
-        val lastDayMinutes = TimeUnit.MILLISECONDS.toMinutes(lastDayUsage) % 60
+        val last24Hours = TimeUnit.MILLISECONDS.toHours(last24HoursUsage)
+        val last24Minutes = TimeUnit.MILLISECONDS.toMinutes(last24HoursUsage) % 60
 
         popupView.findViewById<TextView>(R.id.usageText).text = 
             "Today's usage: ${todayHours}h ${todayMinutes}m\n" +
-            "Last 24h usage: ${lastDayHours}h ${lastDayMinutes}m"
+            "Last 24h usage: ${last24Hours}h ${last24Minutes}m"
 
         popupView.findViewById<Button>(R.id.okButton).setOnClickListener {
             windowManager.removeView(popupView)

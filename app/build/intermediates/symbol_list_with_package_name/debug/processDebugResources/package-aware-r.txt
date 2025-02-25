@@ -77,6 +77,7 @@ animator mtrl_fab_hide_motion_spec
 animator mtrl_fab_show_motion_spec
 animator mtrl_fab_transformation_sheet_collapse_spec
 animator mtrl_fab_transformation_sheet_expand_spec
+array period_options
 attr SharedValue
 attr SharedValueId
 attr actionBarDivider
@@ -3296,6 +3297,7 @@ id graph_wrap
 id group_divider
 id grouping
 id groups
+id headerText
 id header_title
 id hide_ime_id
 id hideable
@@ -3439,6 +3441,7 @@ id path
 id pathRelative
 id peekHeight
 id percent
+id periodSpinner
 id pin
 id position
 id postLayout
