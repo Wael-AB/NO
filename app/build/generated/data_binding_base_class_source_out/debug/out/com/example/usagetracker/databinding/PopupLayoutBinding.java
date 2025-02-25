@@ -24,15 +24,19 @@ public final class PopupLayoutBinding implements ViewBinding {
   public final TextView headerText;
 
   @NonNull
+  public final Button noButton;
+
+  @NonNull
   public final Button okButton;
 
   @NonNull
   public final TextView usageText;
 
   private PopupLayoutBinding(@NonNull CardView rootView, @NonNull TextView headerText,
-      @NonNull Button okButton, @NonNull TextView usageText) {
+      @NonNull Button noButton, @NonNull Button okButton, @NonNull TextView usageText) {
     this.rootView = rootView;
     this.headerText = headerText;
+    this.noButton = noButton;
     this.okButton = okButton;
     this.usageText = usageText;
   }
@@ -70,6 +74,12 @@ public final class PopupLayoutBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.noButton;
+      Button noButton = ViewBindings.findChildViewById(rootView, id);
+      if (noButton == null) {
+        break missingId;
+      }
+
       id = R.id.okButton;
       Button okButton = ViewBindings.findChildViewById(rootView, id);
       if (okButton == null) {
@@ -82,7 +92,7 @@ public final class PopupLayoutBinding implements ViewBinding {
         break missingId;
       }
 
-      return new PopupLayoutBinding((CardView) rootView, headerText, okButton, usageText);
+      return new PopupLayoutBinding((CardView) rootView, headerText, noButton, okButton, usageText);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

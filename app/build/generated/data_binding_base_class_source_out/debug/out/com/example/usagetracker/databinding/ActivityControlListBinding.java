@@ -4,6 +4,8 @@ package com.example.usagetracker.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,17 +26,30 @@ public final class ActivityControlListBinding implements ViewBinding {
   public final RecyclerView appList;
 
   @NonNull
+  public final LinearLayout buttonLayout;
+
+  @NonNull
+  public final Button cancelButton;
+
+  @NonNull
   public final TextView descriptionText;
+
+  @NonNull
+  public final Button okButton;
 
   @NonNull
   public final TextView titleText;
 
   private ActivityControlListBinding(@NonNull ConstraintLayout rootView,
-      @NonNull RecyclerView appList, @NonNull TextView descriptionText,
+      @NonNull RecyclerView appList, @NonNull LinearLayout buttonLayout,
+      @NonNull Button cancelButton, @NonNull TextView descriptionText, @NonNull Button okButton,
       @NonNull TextView titleText) {
     this.rootView = rootView;
     this.appList = appList;
+    this.buttonLayout = buttonLayout;
+    this.cancelButton = cancelButton;
     this.descriptionText = descriptionText;
+    this.okButton = okButton;
     this.titleText = titleText;
   }
 
@@ -71,9 +86,27 @@ public final class ActivityControlListBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.buttonLayout;
+      LinearLayout buttonLayout = ViewBindings.findChildViewById(rootView, id);
+      if (buttonLayout == null) {
+        break missingId;
+      }
+
+      id = R.id.cancelButton;
+      Button cancelButton = ViewBindings.findChildViewById(rootView, id);
+      if (cancelButton == null) {
+        break missingId;
+      }
+
       id = R.id.descriptionText;
       TextView descriptionText = ViewBindings.findChildViewById(rootView, id);
       if (descriptionText == null) {
+        break missingId;
+      }
+
+      id = R.id.okButton;
+      Button okButton = ViewBindings.findChildViewById(rootView, id);
+      if (okButton == null) {
         break missingId;
       }
 
@@ -83,8 +116,8 @@ public final class ActivityControlListBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityControlListBinding((ConstraintLayout) rootView, appList, descriptionText,
-          titleText);
+      return new ActivityControlListBinding((ConstraintLayout) rootView, appList, buttonLayout,
+          cancelButton, descriptionText, okButton, titleText);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

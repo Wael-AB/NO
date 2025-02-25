@@ -24,6 +24,7 @@ class ControlListActivity : AppCompatActivity() {
     private lateinit var binding: ActivityControlListBinding
     private lateinit var database: AppDatabase
     private lateinit var adapter: AppListAdapter
+    private val selectedApps = mutableMapOf<String, Boolean>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,16 +33,36 @@ class ControlListActivity : AppCompatActivity() {
 
         database = AppDatabase.getDatabase(this)
         setupRecyclerView()
+        setupButtons()
         loadApps()
     }
 
     private fun setupRecyclerView() {
-        adapter = AppListAdapter { app, isChecked ->
-            lifecycleScope.launch {
-                database.appUsageDao().updateAppControlStatus(app.packageName, isChecked)
-            }
+        adapter = AppListAdapter { packageName, isChecked ->
+            // Store changes in memory only, don't update database yet
+            selectedApps[packageName] = isChecked
         }
         binding.appList.adapter = adapter
+    }
+
+    private fun setupButtons() {
+        binding.okButton.setOnClickListener {
+            saveChanges()
+            finish()
+        }
+
+        binding.cancelButton.setOnClickListener {
+            finish()
+        }
+    }
+
+    private fun saveChanges() {
+        lifecycleScope.launch {
+            // Apply all changes to the database
+            selectedApps.forEach { (packageName, isControlled) ->
+                database.appUsageDao().updateAppControlStatus(packageName, isControlled)
+            }
+        }
     }
 
     private fun loadApps() {
@@ -64,6 +85,11 @@ class ControlListActivity : AppCompatActivity() {
                 .map { it.packageName }
                 .toSet()
 
+            // Initialize the selected apps map with current values
+            installedApps.forEach { app ->
+                selectedApps[app.packageName] = app.packageName in controlledApps
+            }
+
             adapter.submitList(installedApps.map { app ->
                 app.copy(isControlled = app.packageName in controlledApps)
             })
@@ -79,8 +105,11 @@ data class AppItem(
 )
 
 class AppListAdapter(
-    private val onCheckedChanged: (AppItem, Boolean) -> Unit
+    private val onCheckedChanged: (String, Boolean) -> Unit
 ) : ListAdapter<AppItem, AppListAdapter.ViewHolder>(AppDiffCallback()) {
+    
+    // Keep track of checked state for each position
+    private val checkedStates = mutableMapOf<String, Boolean>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -90,7 +119,13 @@ class AppListAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = getItem(position)
-        holder.bind(item)
+        
+        // Initialize the checked state map when binding
+        if (!checkedStates.containsKey(item.packageName)) {
+            checkedStates[item.packageName] = item.isControlled
+        }
+        
+        holder.bind(item, checkedStates[item.packageName] ?: item.isControlled)
     }
 
     inner class ViewHolder(itemView: android.view.View) : RecyclerView.ViewHolder(itemView) {
@@ -98,13 +133,18 @@ class AppListAdapter(
         private val appName: TextView = itemView.findViewById(R.id.appName)
         private val controlCheckbox: CheckBox = itemView.findViewById(R.id.controlCheckbox)
 
-        fun bind(item: AppItem) {
+        fun bind(item: AppItem, isChecked: Boolean) {
             appIcon.setImageDrawable(item.icon)
             appName.text = item.appName
-            controlCheckbox.isChecked = item.isControlled
             
-            controlCheckbox.setOnCheckedChangeListener { _, isChecked ->
-                onCheckedChanged(item, isChecked)
+            // Remove the listener before setting checked state to avoid triggering it
+            controlCheckbox.setOnCheckedChangeListener(null)
+            controlCheckbox.isChecked = isChecked
+            
+            // Set the listener after setting the checked state
+            controlCheckbox.setOnCheckedChangeListener { _, newCheckedState ->
+                checkedStates[item.packageName] = newCheckedState
+                onCheckedChanged(item.packageName, newCheckedState)
             }
         }
     }
@@ -116,6 +156,8 @@ class AppDiffCallback : DiffUtil.ItemCallback<AppItem>() {
     }
 
     override fun areContentsTheSame(oldItem: AppItem, newItem: AppItem): Boolean {
-        return oldItem == newItem
+        return oldItem.packageName == newItem.packageName && 
+               oldItem.appName == newItem.appName &&
+               oldItem.isControlled == newItem.isControlled
     }
 } 

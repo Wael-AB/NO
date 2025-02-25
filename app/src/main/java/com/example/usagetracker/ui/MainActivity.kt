@@ -1,12 +1,17 @@
 package com.example.usagetracker.ui
 
 import android.app.AppOpsManager
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Process
 import android.provider.Settings
 import android.widget.ArrayAdapter
 import android.widget.Spinner
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.usagetracker.R
@@ -17,6 +22,7 @@ import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.utils.ColorTemplate
+import com.example.usagetracker.util.AccessibilityHelper
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.*
@@ -36,27 +42,64 @@ class MainActivity : AppCompatActivity() {
         periodSpinner = binding.periodSpinner
 
         checkPermissions()
+        checkAccessibilityPermission()
         setupChart()
         setupSpinner()
         setupButtons()
         startUsageTracking()
     }
 
+    override fun onResume() {
+        super.onResume()
+        checkAccessibilityPermission()
+        loadUsageData()
+    }
+
     private fun checkPermissions() {
-        val appOps = getSystemService(APP_OPS_SERVICE) as AppOpsManager
-        val mode = appOps.checkOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            Process.myUid(),
-            packageName
-        )
+        val hasUsageStatsPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+            appOps.unsafeCheckOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                Process.myUid(),
+                packageName
+            ) == AppOpsManager.MODE_ALLOWED
+        } else {
+            @Suppress("DEPRECATION")
+            val appOps = getSystemService(APP_OPS_SERVICE) as AppOpsManager
+            appOps.checkOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                Process.myUid(),
+                packageName
+            ) == AppOpsManager.MODE_ALLOWED
+        }
         
-        if (mode != AppOpsManager.MODE_ALLOWED) {
+        if (!hasUsageStatsPermission) {
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
 
         if (!Settings.canDrawOverlays(this)) {
             startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
         }
+    }
+
+    private fun checkAccessibilityPermission() {
+        if (!AccessibilityHelper.isAccessibilityServiceEnabled(this)) {
+            showAccessibilityPermissionDialog()
+        }
+    }
+
+    private fun showAccessibilityPermissionDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Permission Required")
+            .setMessage("To control app launches, Usage Tracker needs Accessibility Service permission. Please enable it in Settings.")
+            .setPositiveButton("Open Settings") { _, _ ->
+                AccessibilityHelper.openAccessibilitySettings(this)
+            }
+            .setNegativeButton("Cancel") { _, _ ->
+                Toast.makeText(this, "App launch control requires accessibility permission", Toast.LENGTH_LONG).show()
+            }
+            .setCancelable(false)
+            .show()
     }
 
     private fun setupChart() {
@@ -88,6 +131,8 @@ class MainActivity : AppCompatActivity() {
 
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         })
+        
+        periodSpinner.setSelection(0)
     }
 
     private fun setupButtons() {
@@ -105,22 +150,30 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val currentTime = System.currentTimeMillis()
             val startTime = when (periodSpinner.selectedItem.toString()) {
-                "Day" -> {
-                    Calendar.getInstance().apply {
-                        timeInMillis = currentTime
-                        set(Calendar.HOUR_OF_DAY, 0)
-                        set(Calendar.MINUTE, 0)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }.timeInMillis
-                }
+                "Day" -> currentTime - TimeUnit.HOURS.toMillis(24)
                 "Week" -> currentTime - TimeUnit.DAYS.toMillis(7)
                 "Month" -> currentTime - TimeUnit.DAYS.toMillis(30)
                 "Year" -> currentTime - TimeUnit.DAYS.toMillis(365)
-                else -> currentTime - TimeUnit.DAYS.toMillis(1)
+                else -> currentTime - TimeUnit.HOURS.toMillis(24)
             }
 
+            binding.usageChart.centerText = when (periodSpinner.selectedItem.toString()) {
+                "Day" -> "Last 24 Hours"
+                "Week" -> "Last 7 Days"
+                "Month" -> "Last 30 Days"
+                "Year" -> "Last 365 Days"
+                else -> "Last 24 Hours"
+            }
+
+            // Get only controlled apps
             val controlledApps = database.appUsageDao().getControlledApps().first()
+            
+            if (controlledApps.isEmpty()) {
+                binding.usageChart.clear()
+                binding.usageChart.centerText = "No controlled apps"
+                return@launch
+            }
+            
             val entries = mutableListOf<PieEntry>()
             
             for (app in controlledApps) {
@@ -132,7 +185,13 @@ class MainActivity : AppCompatActivity() {
 
                 if (usageTime > 0) {
                     val hours = TimeUnit.MILLISECONDS.toHours(usageTime).toFloat()
-                    entries.add(PieEntry(hours, app.appName))
+                    val minutes = TimeUnit.MILLISECONDS.toMinutes(usageTime) % 60
+                    val displayValue = if (hours < 1) {
+                        "${minutes}m"
+                    } else {
+                        String.format("%.1fh", hours)
+                    }
+                    entries.add(PieEntry(hours, app.appName, displayValue))
                 }
             }
 
@@ -142,7 +201,11 @@ class MainActivity : AppCompatActivity() {
                     valueTextSize = 14f
                     valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
                         override fun getFormattedValue(value: Float): String {
-                            return String.format("%.1f h", value)
+                            return if (value < 1) {
+                                String.format("%.0f min", value * 60)
+                            } else {
+                                String.format("%.1f h", value)
+                            }
                         }
                     }
                 }

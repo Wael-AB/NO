@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Usage Tracker</string>
+    <string name="accessibility_service_description">This service helps control your app usage by showing a confirmation dialog before launching controlled apps. When you try to open a controlled app, you\'ll be asked to confirm if you really want to open it.</string>
     <string name="hello_world">Hello World!</string> <!-- Example string -->
     
     <string-array name="period_options">

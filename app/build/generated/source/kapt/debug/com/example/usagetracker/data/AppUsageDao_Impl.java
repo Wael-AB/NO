@@ -265,26 +265,21 @@ public final class AppUsageDao_Impl implements AppUsageDao {
   }
 
   @Override
-  public Flow<List<AppUsageEntity>> getControlledApps() {
-    final String _sql = "SELECT `app_usage`.`id` AS `id`, `app_usage`.`packageName` AS `packageName`, `app_usage`.`appName` AS `appName`, `app_usage`.`usageTimeInMillis` AS `usageTimeInMillis`, `app_usage`.`date` AS `date`, `app_usage`.`isControlled` AS `isControlled` FROM app_usage WHERE isControlled = 1";
+  public Flow<List<ControlledAppInfo>> getControlledApps() {
+    final String _sql = "SELECT DISTINCT packageName, appName, isControlled FROM app_usage WHERE isControlled = 1 GROUP BY packageName";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
-    return CoroutinesRoom.createFlow(__db, false, new String[] {"app_usage"}, new Callable<List<AppUsageEntity>>() {
+    return CoroutinesRoom.createFlow(__db, false, new String[] {"app_usage"}, new Callable<List<ControlledAppInfo>>() {
       @Override
       @NonNull
-      public List<AppUsageEntity> call() throws Exception {
+      public List<ControlledAppInfo> call() throws Exception {
         final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
         try {
-          final int _cursorIndexOfId = 0;
-          final int _cursorIndexOfPackageName = 1;
-          final int _cursorIndexOfAppName = 2;
-          final int _cursorIndexOfUsageTimeInMillis = 3;
-          final int _cursorIndexOfDate = 4;
-          final int _cursorIndexOfIsControlled = 5;
-          final List<AppUsageEntity> _result = new ArrayList<AppUsageEntity>(_cursor.getCount());
+          final int _cursorIndexOfPackageName = 0;
+          final int _cursorIndexOfAppName = 1;
+          final int _cursorIndexOfIsControlled = 2;
+          final List<ControlledAppInfo> _result = new ArrayList<ControlledAppInfo>(_cursor.getCount());
           while (_cursor.moveToNext()) {
-            final AppUsageEntity _item;
-            final long _tmpId;
-            _tmpId = _cursor.getLong(_cursorIndexOfId);
+            final ControlledAppInfo _item;
             final String _tmpPackageName;
             if (_cursor.isNull(_cursorIndexOfPackageName)) {
               _tmpPackageName = null;
@@ -297,15 +292,11 @@ public final class AppUsageDao_Impl implements AppUsageDao {
             } else {
               _tmpAppName = _cursor.getString(_cursorIndexOfAppName);
             }
-            final long _tmpUsageTimeInMillis;
-            _tmpUsageTimeInMillis = _cursor.getLong(_cursorIndexOfUsageTimeInMillis);
-            final long _tmpDate;
-            _tmpDate = _cursor.getLong(_cursorIndexOfDate);
             final boolean _tmpIsControlled;
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsControlled);
             _tmpIsControlled = _tmp != 0;
-            _item = new AppUsageEntity(_tmpId,_tmpPackageName,_tmpAppName,_tmpUsageTimeInMillis,_tmpDate,_tmpIsControlled);
+            _item = new ControlledAppInfo(_tmpPackageName,_tmpAppName,_tmpIsControlled);
             _result.add(_item);
           }
           return _result;
@@ -370,6 +361,43 @@ public final class AppUsageDao_Impl implements AppUsageDao {
             _tmp = _cursor.getInt(_cursorIndexOfIsControlled);
             _tmpIsControlled = _tmp != 0;
             _result = new AppUsageEntity(_tmpId,_tmpPackageName,_tmpAppName,_tmpUsageTimeInMillis,_tmpDate,_tmpIsControlled);
+          } else {
+            _result = null;
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object getAppNameByPackage(final String packageName,
+      final Continuation<? super String> $completion) {
+    final String _sql = "SELECT appName FROM app_usage WHERE packageName = ? LIMIT 1";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    if (packageName == null) {
+      _statement.bindNull(_argIndex);
+    } else {
+      _statement.bindString(_argIndex, packageName);
+    }
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<String>() {
+      @Override
+      @Nullable
+      public String call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final String _result;
+          if (_cursor.moveToFirst()) {
+            if (_cursor.isNull(0)) {
+              _result = null;
+            } else {
+              _result = _cursor.getString(0);
+            }
           } else {
             _result = null;
           }
@@ -462,6 +490,36 @@ public final class AppUsageDao_Impl implements AppUsageDao {
         _statement.release();
       }
     });
+  }
+
+  @Override
+  public Object getControlledPackageNames(final Continuation<? super List<String>> $completion) {
+    final String _sql = "SELECT DISTINCT packageName FROM app_usage WHERE isControlled = 1";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<List<String>>() {
+      @Override
+      @NonNull
+      public List<String> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final List<String> _result = new ArrayList<String>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final String _item;
+            if (_cursor.isNull(0)) {
+              _item = null;
+            } else {
+              _item = _cursor.getString(0);
+            }
+            _result.add(_item);
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
   }
 
   @NonNull
